@@ -18,7 +18,7 @@
 #
 # Supported Operating Systems: 
 # CentOS 6.*/7.* Minimal, 
-# Ubuntu server 12.04/14.04 
+# Ubuntu server 12.04/16.04 
 # Debian 7.*/8.* 
 # 32bit and 64bit
 #
@@ -71,7 +71,7 @@ ARCH=$(uname -m)
 echo "Detected : $OS  $VER  $ARCH"
 
 if [[ "$OS" = "CentOs" && ("$VER" = "6" || "$VER" = "7" ) || 
-      "$OS" = "Ubuntu" && ("$VER" = "12.04" || "$VER" = "14.04" ) || 
+      "$OS" = "Ubuntu" && ("$VER" = "12.04" || "$VER" = "16.04" ) || 
       "$OS" = "debian" && ("$VER" = "7" || "$VER" = "8" ) ]] ; then
     echo "Ok."
 else
