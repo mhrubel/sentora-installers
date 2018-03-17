@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Supported Operating Systems: CentOS 6.*/7.* Minimal, Ubuntu server 12.04/16.04 
+# Supported Operating Systems: CentOS 6.*/7.* Minimal, Ubuntu server 12.04/14.04 
 #  32bit and 64bit
 #
 #  Author Pascal Peyremorte (ppeyremorte@sentora.org)
@@ -57,7 +57,7 @@ ARCH=$(uname -m)
 echo "Detected : $OS  $VER  $ARCH"
 
 if [[ "$OS" = "CentOs" && ("$VER" = "6" || "$VER" = "7" ) || 
-      "$OS" = "Ubuntu" && ("$VER" = "12.04" || "$VER" = "16.04" ) ]] ; then 
+      "$OS" = "Ubuntu" && ("$VER" = "12.04" || "$VER" = "14.04" ) ]] ; then 
     echo "Ok."
 else
     echo "Sorry, this OS is not supported by Sentora." 
@@ -118,7 +118,7 @@ elif [[ "$OS" = "Ubuntu" ]]; then
     
     DB_PCKG="mysql-server"
     HTTP_PCKG="apache2"
-    PHP_PCKG="apache2-mod-php7.1"
+    PHP_PCKG="apache2-mod-php5.6"
     BIND_PCKG="bind9"
 fi
   
@@ -404,7 +404,7 @@ elif [[ "$OS" = "Ubuntu" ]]; then
     rm -rf "/etc/apt/sources.list/*"
     cp "/etc/apt/sources.list" "/etc/apt/sources.list.save"
 
-    if [ "$VER" = "16.04" ]; then
+    if [ "$VER" = "14.04" ]; then
         cat > /etc/apt/sources.list <<EOF
 #Depots main restricted
 deb http://archive.ubuntu.com/ubuntu $(lsb_release -sc) main restricted universe multiverse
@@ -810,7 +810,7 @@ if [[ "$OS" = "CentOs" ]]; then
     sed -i "s|DocumentRoot \"/var/www/html\"|DocumentRoot $PANEL_PATH/panel|" "$HTTP_CONF_PATH"
 elif [[ "$OS" = "Ubuntu" ]]; then
     # disable completely sites-enabled/000-default.conf
-    if [[ "$VER" = "16.04" ]]; then 
+    if [[ "$VER" = "14.04" ]]; then 
         sed -i "s|IncludeOptional sites-enabled|#&|" "$HTTP_CONF_PATH"
     else
         sed -i "s|Include sites-enabled|#&|" "$HTTP_CONF_PATH"
@@ -828,7 +828,7 @@ fi
 
 # adjustments for apache 2.4
 if [[ ("$OS" = "CentOs" && "$VER" = "7") || 
-      ("$OS" = "Ubuntu" && "$VER" = "16.04") ]] ; then 
+      ("$OS" = "Ubuntu" && "$VER" = "14.04") ]] ; then 
     # Order deny,allow / Deny from all   ->  Require all denied
     sed -i 's|Order deny,allow|Require all denied|I'  $PANEL_CONF/apache/httpd.conf
     sed -i '/Deny from all/d' $PANEL_CONF/apache/httpd.conf
@@ -857,13 +857,13 @@ if [[ "$OS" = "CentOs" ]]; then
     PHP_INI_PATH="/etc/php.ini"
     PHP_EXT_PATH="/etc/php.d"
 elif [[ "$OS" = "Ubuntu" ]]; then
-    $PACKAGE_INSTALLER libapache2-mod-php7.1 php7.1-common php7.1-cli php7.1-mysql php7.1-gd php7.1-mcrypt php7.1-curl php-pear php7.1-imap php7.1-xmlrpc php7.1-xsl php7.1-intl php7.1-mbstring php7.1-xml php7.1-zip
-    if [ "$VER" = "16.04" ]; then
-        phpenmod mcrypt  # missing in the package for Ubuntu 16!
+    $PACKAGE_INSTALLER libapache2-mod-php5.6 php5.6-common php5.6-cli php5.6-mysql php5.6-gd php5.6-mcrypt php5.6-curl php-pear php5.6-imap php5.6-xmlrpc php5.6-xsl php5.6-intl php5.6-mbstring php5.6-xml php5.6-zip
+    if [ "$VER" = "14.04" ]; then
+        php71enmod mcrypt  # missing in the package for Ubuntu 16!
     else
-        $PACKAGE_INSTALLER php7.1-suhosin
+        $PACKAGE_INSTALLER php5.6-suhosin
     fi
-    PHP_INI_PATH="/etc/php/7.1/apache2/php.ini"
+    PHP_INI_PATH="/etc/php/5.6/apache2/php.ini"
 fi
 # Setup php upload dir
 mkdir -p $PANEL_DATA/temp
@@ -880,7 +880,7 @@ if [[ "$OS" = "CentOs" ]]; then
     # Remove session & php values from apache that cause override
     sed -i "/php_value/d" /etc/httpd/conf.d/php.conf
 elif [[ "$OS" = "Ubuntu" ]]; then
-    sed -i "s|;session.save_path = \"/var/lib/php7.1\"|session.save_path = \"$PANEL_DATA/sessions\"|" $PHP_INI_PATH
+    sed -i "s|;session.save_path = \"/var/lib/php5.6\"|session.save_path = \"$PANEL_DATA/sessions\"|" $PHP_INI_PATH
 fi
 sed -i "/php_value/d" $PHP_INI_PATH
 echo "session.save_path = $PANEL_DATA/sessions;">> $PHP_INI_PATH
@@ -893,13 +893,13 @@ sed -i "s|;upload_tmp_dir =|upload_tmp_dir = $PANEL_DATA/temp/|" $PHP_INI_PATH
 sed -i "s|expose_php = On|expose_php = Off|" $PHP_INI_PATH
 
 # Build suhosin for PHP 5.x which is required by Sentora. 
-if [[ "$OS" = "CentOs" || ( "$OS" = "Ubuntu" && "$VER" = "16.04") ]] ; then
+if [[ "$OS" = "CentOs" || ( "$OS" = "Ubuntu" && "$VER" = "14.04") ]] ; then
     echo -e "\n# Building suhosin"
     if [[ "$OS" = "Ubuntu" ]]; then
-        $PACKAGE_INSTALLER php7.1
+        $PACKAGE_INSTALLER php5.6
     fi
     SUHOSIN_VERSION="0.9.38"
-    wget -nv -O suhosin.zip https://github.com/stefanesser/suhosin7/archive/$SUHOSIN_VERSION.zip
+    wget -nv -O suhosin.zip https://github.com/stefanesser/suhosin/archive/$SUHOSIN_VERSION.zip
     unzip -q suhosin.zip
     rm -f suhosin.zip
     cd suhosin-$SUHOSIN_VERSION
@@ -964,9 +964,9 @@ ln -s "$PANEL_CONF/proftpd/proftpd-mysql.conf" "$FTP_CONF_PATH"
 mkdir -p $PANEL_DATA/logs/proftpd
 chmod -R 644 $PANEL_DATA/logs/proftpd
 
-# Correct bug from package in Ubutu16.04 which screw service proftpd restart
+# Correct bug from package in Ubutu14.04 which screw service proftpd restart
 # see https://bugs.launchpad.net/ubuntu/+source/proftpd-dfsg/+bug/1246245
-if [[ "$OS" = "Ubuntu" && "$VER" = "16.04" ]]; then
+if [[ "$OS" = "Ubuntu" && "$VER" = "14.04" ]]; then
    sed -i 's|\([ \t]*start-stop-daemon --stop --signal $SIGNAL \)\(--quiet --pidfile "$PIDFILE"\)$|\1--retry 1 \2|' /etc/init.d/proftpd
 fi
 
@@ -1195,7 +1195,7 @@ service atd restart
     echo "MySQL Roundcube Password : $roundcubepassword"
     echo "Modified by              : Mahmudul Hasan Rubel (bd.mhrubel@gmail.com)"
     echo "Sentora Version          : 1.0.4 (beta)"
-	echo "PHP Version              : 7.1"
+	echo "PHP Version              : 5.6.x"
 } >> /root/passwords.txt
 
 #--- Advise the admin that Sentora is now installed and accessible.
@@ -1215,7 +1215,7 @@ echo " MySQL ProFTPd Password   : $proftpdpassword"
 echo " MySQL Roundcube Password : $roundcubepassword"
 echo " Modified by              : Mahmudul Hasan Rubel (bd.mhrubel@gmail.com)"
 echo " Sentora Version          : 1.0.4 (beta)"
-echo " PHP Version               : 7.1"
+echo " PHP Version              : 5.6.x"
 echo "   (theses passwords are saved in /root/passwords.txt)"
 echo "#########################################################################"
 echo ""
