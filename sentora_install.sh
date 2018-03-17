@@ -859,9 +859,9 @@ if [[ "$OS" = "CentOs" ]]; then
 elif [[ "$OS" = "Ubuntu" ]]; then
     $PACKAGE_INSTALLER libapache2-mod-php5.6 php5.6-common php5.6-cli php5.6-mysql php5.6-gd php5.6-mcrypt php5.6-curl php-pear php5.6-imap php5.6-xmlrpc php5.6-xsl php5.6-intl php5.6-mbstring php5.6-xml php5.6-zip
     if [ "$VER" = "14.04" ]; then
-        php71enmod mcrypt  # missing in the package for Ubuntu 16!
+        php5enmod mcrypt  # missing in the package for Ubuntu 16!
     else
-        $PACKAGE_INSTALLER php5.6-suhosin
+        $PACKAGE_INSTALLER php5-suhosin
     fi
     PHP_INI_PATH="/etc/php/5.6/apache2/php.ini"
 fi
