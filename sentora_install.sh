@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Modified version of Sentora Automated Installation Script - by github@mhrubel
+# Modified Version of Sentora Automated Installation Script - by github@mhrubel
 # =============================================================================
 #
 #  This program is free software: you can redistribute it and/or modify
@@ -34,9 +34,9 @@ PANEL_DATA="/var/sentora"
 
 #--- Display the 'welcome' splash/user warning info..
 echo ""
-echo "############################################################"
+echo "###########################################################################"
 echo "#  Welcome to the Official Sentora Installer $SENTORA_INSTALLER_VERSION  #"
-echo "############################################################"
+echo "###########################################################################"
 
 echo -e "\nChecking that minimal requirements are ok"
 
@@ -118,7 +118,7 @@ elif [[ "$OS" = "Ubuntu" ]]; then
     
     DB_PCKG="mysql-server"
     HTTP_PCKG="apache2"
-    PHP_PCKG="apache2-mod-php5.6"
+    PHP_PCKG="apache2-mod-php7.1"
     BIND_PCKG="bind9"
 fi
   
@@ -143,6 +143,10 @@ if [[ "$OS" = "CentOs" ]]; then
     yum -y update
     $PACKAGE_INSTALLER bind-utils
 elif [[ "$OS" = "Ubuntu" ]]; then
+	apt-get install python-software-properties #mhrubel
+	apt-get install software-properties-common #mhrubel
+	add-apt-repository ppa:ondrej/php #mhrubel
+	apt-get update -y #mhrubel
     apt-get -yqq update   #ensure we can install
     $PACKAGE_INSTALLER dnsutils
 fi
@@ -853,13 +857,13 @@ if [[ "$OS" = "CentOs" ]]; then
     PHP_INI_PATH="/etc/php.ini"
     PHP_EXT_PATH="/etc/php.d"
 elif [[ "$OS" = "Ubuntu" ]]; then
-    $PACKAGE_INSTALLER libapache2-mod-php5.6 php5.6-common php5.6-cli php5.6-mysql php5.6-gd php5.6-mcrypt php5.6-curl php-pear php5.6-imap php5.6-xmlrpc php5.6-xsl php5.6-intl
+    $PACKAGE_INSTALLER libapache2-mod-php7.1 php7.1-common php7.1-cli php7.1-mysql php7.1-gd php7.1-mcrypt php7.1-curl php-pear php7.1-imap php7.1-xmlrpc php7.1-xsl php7.1-intl php7.1-mbstring php7.1-xml php7.1-zip
     if [ "$VER" = "16.04" ]; then
         phpenmod mcrypt  # missing in the package for Ubuntu 16!
     else
-        $PACKAGE_INSTALLER php5.6-suhosin
+        $PACKAGE_INSTALLER php7.1-suhosin
     fi
-    PHP_INI_PATH="/etc/php/5.6/apache2/php.ini"
+    PHP_INI_PATH="/etc/php/7.1/apache2/php.ini"
 fi
 # Setup php upload dir
 mkdir -p $PANEL_DATA/temp
@@ -876,7 +880,7 @@ if [[ "$OS" = "CentOs" ]]; then
     # Remove session & php values from apache that cause override
     sed -i "/php_value/d" /etc/httpd/conf.d/php.conf
 elif [[ "$OS" = "Ubuntu" ]]; then
-    sed -i "s|;session.save_path = \"/var/lib/php5.6\"|session.save_path = \"$PANEL_DATA/sessions\"|" $PHP_INI_PATH
+    sed -i "s|;session.save_path = \"/var/lib/php7.1\"|session.save_path = \"$PANEL_DATA/sessions\"|" $PHP_INI_PATH
 fi
 sed -i "/php_value/d" $PHP_INI_PATH
 echo "session.save_path = $PANEL_DATA/sessions;">> $PHP_INI_PATH
@@ -892,10 +896,10 @@ sed -i "s|expose_php = On|expose_php = Off|" $PHP_INI_PATH
 if [[ "$OS" = "CentOs" || ( "$OS" = "Ubuntu" && "$VER" = "16.04") ]] ; then
     echo -e "\n# Building suhosin"
     if [[ "$OS" = "Ubuntu" ]]; then
-        $PACKAGE_INSTALLER php5.6
+        $PACKAGE_INSTALLER php7.1
     fi
-    SUHOSIN_VERSION="0.9.37.1"
-    wget -nv -O suhosin.zip https://github.com/stefanesser/suhosin/archive/$SUHOSIN_VERSION.zip
+    SUHOSIN_VERSION="0.9.38"
+    wget -nv -O suhosin.zip https://github.com/stefanesser/suhosin7/archive/$SUHOSIN_VERSION.zip
     unzip -q suhosin.zip
     rm -f suhosin.zip
     cd suhosin-$SUHOSIN_VERSION
@@ -1191,6 +1195,7 @@ service atd restart
     echo "MySQL Roundcube Password : $roundcubepassword"
     echo "Modified by              : Mahmudul Hasan Rubel (bd.mhrubel@gmail.com)"
     echo "Sentora Version          : 1.0.4 (beta)"
+	echo "PHP Version              : 7.1"
 } >> /root/passwords.txt
 
 #--- Advise the admin that Sentora is now installed and accessible.
@@ -1210,6 +1215,7 @@ echo " MySQL ProFTPd Password   : $proftpdpassword"
 echo " MySQL Roundcube Password : $roundcubepassword"
 echo " Modified by              : Mahmudul Hasan Rubel (bd.mhrubel@gmail.com)"
 echo " Sentora Version          : 1.0.4 (beta)"
+echo " PHP Version               : 7.1"
 echo "   (theses passwords are saved in /root/passwords.txt)"
 echo "#########################################################################"
 echo ""
