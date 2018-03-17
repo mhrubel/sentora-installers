@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-# Supported Operating Systems: CentOS 6.*/7.* Minimal, Ubuntu server 12.04/14.04 
+# Supported Operating Systems: CentOS 6.*/7.* Minimal, Ubuntu server 12.04/16.04 
 #  32bit and 64bit
 #
 #  Author Pascal Peyremorte (ppeyremorte@sentora.org)
@@ -118,7 +118,7 @@ elif [[ "$OS" = "Ubuntu" ]]; then
     
     DB_PCKG="mysql-server"
     HTTP_PCKG="apache2"
-    PHP_PCKG="apache2-mod-php5"
+    PHP_PCKG="apache2-mod-php5.6"
     BIND_PCKG="bind9"
 fi
   
@@ -400,7 +400,7 @@ elif [[ "$OS" = "Ubuntu" ]]; then
     rm -rf "/etc/apt/sources.list/*"
     cp "/etc/apt/sources.list" "/etc/apt/sources.list.save"
 
-    if [ "$VER" = "14.04" ]; then
+    if [ "$VER" = "16.04" ]; then
         cat > /etc/apt/sources.list <<EOF
 #Depots main restricted
 deb http://archive.ubuntu.com/ubuntu $(lsb_release -sc) main restricted universe multiverse
@@ -485,7 +485,7 @@ rm "$PANEL_PATH/panel/LICENSE.md" "$PANEL_PATH/panel/README.md" "$PANEL_PATH/pan
 rm -rf "$PANEL_PATH/_delete_me" "$PANEL_PATH/.gitignore"
 
 # Temp patch
-wget -O hotfix_controller.ext.php "https://raw.githubusercontent.com/mhrubel/sentora-core/1.0.4/modules/ftp_management/code/controller.ext.php"
+wget -O hotfix_controller.ext.php "https://raw.githubusercontent.com/mhrubel/sentora-core/$SENTORA_CORE_VERSION/modules/ftp_management/code/controller.ext.php"
 mv /etc/sentora/panel/modules/ftp_management/code/controller.ext.php controller.ext.php_backup
 mv hotfix_controller.ext.php /etc/sentora/panel/modules/ftp_management/code/controller.ext.php
 chown root:root /etc/sentora/panel/modules/ftp_management/code/controller.ext.php
@@ -806,7 +806,7 @@ if [[ "$OS" = "CentOs" ]]; then
     sed -i "s|DocumentRoot \"/var/www/html\"|DocumentRoot $PANEL_PATH/panel|" "$HTTP_CONF_PATH"
 elif [[ "$OS" = "Ubuntu" ]]; then
     # disable completely sites-enabled/000-default.conf
-    if [[ "$VER" = "14.04" ]]; then 
+    if [[ "$VER" = "16.04" ]]; then 
         sed -i "s|IncludeOptional sites-enabled|#&|" "$HTTP_CONF_PATH"
     else
         sed -i "s|Include sites-enabled|#&|" "$HTTP_CONF_PATH"
@@ -824,7 +824,7 @@ fi
 
 # adjustments for apache 2.4
 if [[ ("$OS" = "CentOs" && "$VER" = "7") || 
-      ("$OS" = "Ubuntu" && "$VER" = "14.04") ]] ; then 
+      ("$OS" = "Ubuntu" && "$VER" = "16.04") ]] ; then 
     # Order deny,allow / Deny from all   ->  Require all denied
     sed -i 's|Order deny,allow|Require all denied|I'  $PANEL_CONF/apache/httpd.conf
     sed -i '/Deny from all/d' $PANEL_CONF/apache/httpd.conf
@@ -853,13 +853,13 @@ if [[ "$OS" = "CentOs" ]]; then
     PHP_INI_PATH="/etc/php.ini"
     PHP_EXT_PATH="/etc/php.d"
 elif [[ "$OS" = "Ubuntu" ]]; then
-    $PACKAGE_INSTALLER libapache2-mod-php5 php5-common php5-cli php5-mysql php5-gd php5-mcrypt php5-curl php-pear php5-imap php5-xmlrpc php5-xsl php5-intl
-    if [ "$VER" = "14.04" ]; then
-        php5enmod mcrypt  # missing in the package for Ubuntu 14!
+    $PACKAGE_INSTALLER libapache2-mod-php5.6 php5.6-common php5.6-cli php5.6-mysql php5.6-gd php5.6-mcrypt php5.6-curl php-pear php5.6-imap php5.6-xmlrpc php5.6-xsl php5.6-intl
+    if [ "$VER" = "16.04" ]; then
+        phpenmod mcrypt  # missing in the package for Ubuntu 16!
     else
-        $PACKAGE_INSTALLER php5-suhosin
+        $PACKAGE_INSTALLER php5.6-suhosin
     fi
-    PHP_INI_PATH="/etc/php5/apache2/php.ini"
+    PHP_INI_PATH="/etc/php/5.6/apache2/php.ini"
 fi
 # Setup php upload dir
 mkdir -p $PANEL_DATA/temp
@@ -876,7 +876,7 @@ if [[ "$OS" = "CentOs" ]]; then
     # Remove session & php values from apache that cause override
     sed -i "/php_value/d" /etc/httpd/conf.d/php.conf
 elif [[ "$OS" = "Ubuntu" ]]; then
-    sed -i "s|;session.save_path = \"/var/lib/php5\"|session.save_path = \"$PANEL_DATA/sessions\"|" $PHP_INI_PATH
+    sed -i "s|;session.save_path = \"/var/lib/php5.6\"|session.save_path = \"$PANEL_DATA/sessions\"|" $PHP_INI_PATH
 fi
 sed -i "/php_value/d" $PHP_INI_PATH
 echo "session.save_path = $PANEL_DATA/sessions;">> $PHP_INI_PATH
@@ -889,10 +889,10 @@ sed -i "s|;upload_tmp_dir =|upload_tmp_dir = $PANEL_DATA/temp/|" $PHP_INI_PATH
 sed -i "s|expose_php = On|expose_php = Off|" $PHP_INI_PATH
 
 # Build suhosin for PHP 5.x which is required by Sentora. 
-if [[ "$OS" = "CentOs" || ( "$OS" = "Ubuntu" && "$VER" = "14.04") ]] ; then
+if [[ "$OS" = "CentOs" || ( "$OS" = "Ubuntu" && "$VER" = "16.04") ]] ; then
     echo -e "\n# Building suhosin"
     if [[ "$OS" = "Ubuntu" ]]; then
-        $PACKAGE_INSTALLER php5-dev
+        $PACKAGE_INSTALLER php5.6
     fi
     SUHOSIN_VERSION="0.9.37.1"
     wget -nv -O suhosin.zip https://github.com/stefanesser/suhosin/archive/$SUHOSIN_VERSION.zip
@@ -960,9 +960,9 @@ ln -s "$PANEL_CONF/proftpd/proftpd-mysql.conf" "$FTP_CONF_PATH"
 mkdir -p $PANEL_DATA/logs/proftpd
 chmod -R 644 $PANEL_DATA/logs/proftpd
 
-# Correct bug from package in Ubutu14.04 which screw service proftpd restart
+# Correct bug from package in Ubutu16.04 which screw service proftpd restart
 # see https://bugs.launchpad.net/ubuntu/+source/proftpd-dfsg/+bug/1246245
-if [[ "$OS" = "Ubuntu" && "$VER" = "14.04" ]]; then
+if [[ "$OS" = "Ubuntu" && "$VER" = "16.04" ]]; then
    sed -i 's|\([ \t]*start-stop-daemon --stop --signal $SIGNAL \)\(--quiet --pidfile "$PIDFILE"\)$|\1--retry 1 \2|' /etc/init.d/proftpd
 fi
 
@@ -1189,12 +1189,14 @@ service atd restart
     echo "MySQL Postfix Password   : $postfixpassword"
     echo "MySQL ProFTPd Password   : $proftpdpassword"
     echo "MySQL Roundcube Password : $roundcubepassword"
+    echo "Modified by              : Mahmudul Hasan Rubel (bd.mhrubel@gmail.com)"
+    echo "Sentora Version          : 1.0.4 (beta)"
 } >> /root/passwords.txt
 
 #--- Advise the admin that Sentora is now installed and accessible.
 {
-echo "########################################################"
-echo " Congratulations Sentora has now been installed on your"
+echo "#########################################################################"
+echo " Congratulations Sentora 1.0.4(beta) has now been installed on your"
 echo " server. Please review the log file left in /root/ for "
 echo " any errors encountered during installation."
 echo ""
@@ -1206,8 +1208,10 @@ echo " MySQL Root Password      : $mysqlpassword"
 echo " MySQL Postfix Password   : $postfixpassword"
 echo " MySQL ProFTPd Password   : $proftpdpassword"
 echo " MySQL Roundcube Password : $roundcubepassword"
+echo " Modified by              : Mahmudul Hasan Rubel (bd.mhrubel@gmail.com)"
+echo " Sentora Version          : 1.0.4 (beta)"
 echo "   (theses passwords are saved in /root/passwords.txt)"
-echo "########################################################"
+echo "#########################################################################"
 echo ""
 } &>/dev/tty
 
@@ -1220,5 +1224,5 @@ if [[ "$INSTALL" != "auto" ]] ; then
             [Nn]* ) exit;
         esac
     done
-    shutdown -r now
+    reboot
 fi
